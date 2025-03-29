@@ -1,37 +1,42 @@
-import os
 import streamlit as st
-from streamlit.runtime.scriptrunner import RerunException, get_script_run_ctx
+from pathlib import Path
 
-st.set_page_config(page_title="DashClass Launcher", layout="centered")
-st.markdown("<h2 style='text-align: center;'>DashClass - Identificação do Professor</h2>", unsafe_allow_html=True)
+# Configuração da interface
+st.set_page_config(page_title="DashClass", layout="centered")
+st.markdown("<h2 style='text-align: center;'>DashClass - Gerenciamento de Aulas</h2>", unsafe_allow_html=True)
 
-st.write("Bem-vindo ao DashClass! Para começar, informe seu nome abaixo. Isso nos ajudará a personalizar seu ambiente de trabalho e manter seus dados separados dos demais professores.")
+# Menu lateral
+st.sidebar.markdown("### Navegação")
+menu_opcoes = [
+    "Cadastro de Turmas",
+    "Registro de Aulas",
+    "Controle de Aulas Dadas",
+    "Gráfico de Aulas Dadas",
+    "Visualizar Aulas Registradas",
+    "Excluir Turma",
+    "Excluir Disciplina"
+]
+menu = st.sidebar.radio("Selecione a opção desejada:", menu_opcoes)
 
-nome = st.text_input("Digite seu nome completo:")
+# Caminho base para as telas
+tela_path = Path("telas")
 
-if nome:
-    # Normalizar o nome para pasta (sem espaços, acentos, etc.)
-    nome_folder = nome.strip().lower().replace(" ", "_").replace("ç", "c").replace("ã", "a").replace("á", "a").replace("é", "e")
+# Mapeamento das telas para seus respectivos arquivos .py
+telas = {
+    "Cadastro de Turmas": "cadastro_turmas.py",
+    "Registro de Aulas": "registro_aulas.py",
+    "Controle de Aulas Dadas": "controle_aulas.py",
+    "Gráfico de Aulas Dadas": "graficos.py",
+    "Visualizar Aulas Registradas": "visualizar_aulas.py",
+    "Excluir Turma": "excluir_turma.py",
+    "Excluir Disciplina": "excluir_disciplina.py"
+}
 
-    destino = os.path.join("usuarios", nome_folder)
-    if not os.path.exists(destino):
-        os.makedirs(destino)
-        origem = "modelo_dashclass"
-        os.system(f"xcopy /E /I /Y \"{origem}\" \"{destino}\"")
+# Execução da tela selecionada
+tela_arquivo = tela_path / telas[menu]
 
-    st.success(f"Ambiente de trabalho criado para {nome}.")
-    st.session_state['usuario'] = nome
-
-    # Redirecionar para o DashClass do usuário
-    raise RerunException(get_script_run_ctx())
-
-if 'usuario' in st.session_state:
-    nome_folder = st.session_state['usuario'].strip().lower().replace(" ", "_").replace("ç", "c").replace("ã", "a").replace("á", "a").replace("é", "e")
-    destino = os.path.join("usuarios", nome_folder)
-    dash_path = os.path.join(destino, "dashclass.py")
-
-    if os.path.exists(dash_path):
-        st.success(f"Abrindo seu DashClass, {st.session_state['usuario']}...")
-        exec(open(dash_path, encoding="utf-8").read(), globals())
-    else:
-        st.error("Erro ao localizar seu ambiente personalizado. Tente novamente ou contate o suporte.")
+if tela_arquivo.exists():
+    with open(tela_arquivo, "r", encoding="utf-8") as f:
+        exec(f.read())
+else:
+    st.error("Tela não encontrada. Verifique se o arquivo existe em /telas.")
